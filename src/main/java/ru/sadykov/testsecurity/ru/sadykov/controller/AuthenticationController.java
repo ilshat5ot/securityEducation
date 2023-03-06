@@ -17,6 +17,17 @@ public class AuthenticationController {
     public String pageForAuthenticatedUsers(Principal principal) {
         return "secured part of web service: " + principal.getName();
     }
+
+    @GetMapping("/read_profile")
+    public String pageForReadProfile() {
+        return "read profile page";
+    }
+
+    @GetMapping("/only_for_admins")
+    public String pageForAdminsPage() {
+        return "only for admin page";
+    }
+
     /**Principal - позволяет вытащить логин
      * SecurityContextHolder - хранилище данных о пользователе спринга
      * SecurityContext - оборачивается SecurityContextHolder хранит данные в ThredLocal переменной. Данные ThredLocal
