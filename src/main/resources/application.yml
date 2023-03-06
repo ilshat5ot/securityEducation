@@ -8,11 +8,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQL95Dialect
-        temp:
-          use_jdbc_metadata_defaults: false
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/spring_course
     username: postgres
     password: Postgres
-    generate-unique-name: true

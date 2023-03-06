@@ -1,12 +1,22 @@
 package ru.sadykov.testsecurity.ru.sadykov.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.sadykov.testsecurity.ru.sadykov.entity.User;
+import ru.sadykov.testsecurity.ru.sadykov.service.UserService;
 
 import java.security.Principal;
 
 @RestController
 public class AuthenticationController {
+
+    UserService userService;
+
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
 
     @GetMapping("/")
     public String homePage() {
@@ -15,7 +25,8 @@ public class AuthenticationController {
 
     @GetMapping("/authenticated")
     public String pageForAuthenticatedUsers(Principal principal) {
-        return "secured part of web service: " + principal.getName();
+        User user = userService.findByUsername(principal.getName());
+        return "secured part of web service: " + user.getUserName() + user.getEmail();
     }
 
     @GetMapping("/read_profile")

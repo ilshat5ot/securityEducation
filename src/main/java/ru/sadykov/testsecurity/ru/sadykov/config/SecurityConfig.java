@@ -1,20 +1,27 @@
 package ru.sadykov.testsecurity.ru.sadykov.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import javax.sql.DataSource;
+import ru.sadykov.testsecurity.ru.sadykov.service.UserService;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity(debug = true)
 /**Вместо extends WebSecurityConfigurerAdapter используем новый подход @EnableWebSecurity*/
 public class SecurityConfig {
 
+    private UserService userService;
 
+    @Autowired
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
 
     /**Когда мы говорим что у пользователя должна быть роль (hasRole) ADMIN то спринг преобразует это в
      * ROLE_ADMIN и ищет соответствие в БД; А когда проверяются Authority данные с БД сравниваются
@@ -32,39 +39,25 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**jdbc auth
-     * Этот вид аутентификации будет работать при соблюдении простой структуры БД описанной в dbData
-     * коменты при первом запуске программы нужно убрать*/
+   /**daoAuth
+    * В этом варианте мы создаем свои собственные сущности которыми хотим управлять с помощью security
+    * Обязанности DaoAuthenticationProvider сказать существет пользователь или нет, если да, то положи в
+    * SpringSecurityContext.
+    * Для того что бы узнать существует пользователь или нет нужно засетить в DaoAuthenticationProvider
+    * бин UserDetailsService*/
     @Bean
-    public JdbcUserDetailsManager users(DataSource dataSource) {
-//        UserDetails user = User.builder()
-//                .username("user")
-//                .password("{bcrypt}$2a$10$DZgsBGRJRTbfnqxaVIUW3.ZWOcGk8uxRAN5bmuKotfHtdmiZ1D95q")
-//                .roles("USER")
-//                .build();
-//        UserDetails admin = User.builder()
-//                .username("admin")
-//                .password("{bcrypt}$2a$10$DZgsBGRJRTbfnqxaVIUW3.ZWOcGk8uxRAN5bmuKotfHtdmiZ1D95q")
-//                .roles("USER", "ADMIN")
-//                .build();
-        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
-//        /**Если такие данные существуют, то они удаляются из БД*/
-//        if (jdbcUserDetailsManager.userExists(user.getUsername())){
-//            jdbcUserDetailsManager.deleteUser(user.getUsername());
-//        }
-//        if (jdbcUserDetailsManager.userExists(admin.getUsername())){
-//            jdbcUserDetailsManager.deleteUser(admin.getUsername());
-//        }
-//        /**Создвем пользователей в БД*/
-//        jdbcUserDetailsManager.createUser(user);
-//        jdbcUserDetailsManager.createUser(admin);
-        return jdbcUserDetailsManager;
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setUserDetailsService(userService);
+        return authenticationProvider;
     }
-
-//    @Bean
-//    public DataSource dataSource() {
-//        return new DriverManagerDataSource();
-//    }
+    /**Преобразователь паролей - из текста будет получать хеш
+     * Данный бин нужно засетить в DaoAuthenticationProvider*/
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
 
     /**По умолчанию spring наш запрос обрабатывает по адресу security/login мы можем поменять это применив
